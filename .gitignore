@@ -1,0 +1,66 @@
+# OS / filesystem
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Visual Studio / MSVC
+.vs/
+*.user
+*.suo
+*.vcxproj.user
+*.VC.db
+*.VC.opendb
+
+# Office temporary files
+~$*
+
+# Archives / backups / logs
+*.bak
+*.tmp
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# C / C++ build artifacts
+*.o
+*.obj
+*.lo
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exe
+*.out
+*.pdb
+*.idb
+*.ilk
+
+# Common build folders
+build/
+cmake-build-*/
+bin/
+obj/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
