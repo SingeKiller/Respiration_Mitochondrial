@@ -8,7 +8,7 @@
 #include "writer.hpp"
 
 
-// Initialiation du Calcium cytosolique
+// Initialiation du Calcium cytosolique en fonction du temps
 
 double Ca_c(double t){
     double base = 0.0001;
@@ -19,7 +19,7 @@ double Ca_c(double t){
     return base;
 }
 
-// Calcul de tous les flux
+// Calcul de tous les flux 
 
 double J_GDH(std::map<std::string, double> params){
     if (params["FBP"] < 0){
@@ -120,3 +120,35 @@ double J_NaCa(etat x, std::map<std::string, double> params,double t){
     double Jnaca = params["p23"]*(x.Ca_m / ca_c)* exp(params["p24"] * x.deltaPsi);
     return Jnaca;
 }
+
+
+//calcule des EDO differentes ( NADH(t) , ADP(t), deltaPsi(t), Ca_m(t) )
+
+double dNADH_dt(etat x, std::map<std::string, double> params,double t){
+    return params["g"] * ( J_PDH(x, params) - J_o(x, params));
+}
+
+double dADP_m_dt(etat x, std::map<std::string, double> params, double t){
+    return params["g"]*(J_ANT(x,params)-J_F1F0(x,params));
+}
+
+double ddeltapsi_dt(etat x, std::map<std::string, double> params, double t){
+    return (J_Hres(x,params)-J_Hatp(x,params)-J_ANT(x,params) + J_Hleak(x,params) - J_NaCa(x,params,t)-2*J_uni(x,params,t))/params["Cm"];
+}
+
+double dCa_m_dt(etat x, std::map<std::string,double> params, double t){
+    return params["fm"]*(J_uni(x,params,t)-J_NaCa(x,params,t));
+}
+
+
+// modification de l'état au cours du temps 
+
+etat solver(etat x, std::map<std::string,double> params, double t){
+    etat dx_dt;
+    dx_dt.NADH_m = dNADH_dt(dx_dt,params,t);
+    dx_dt.ADP_m = dADP_m_dt(dx_dt,params,t);
+    dx_dt.deltaPsi = ddeltapsi_dt(dx_dt,params,t);
+    dx_dt.Ca_m = dCa_m_dt(dx_dt,params,t);
+    return dx_dt;
+}
+

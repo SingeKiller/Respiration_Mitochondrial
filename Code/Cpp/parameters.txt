@@ -1,5 +1,3 @@
-# Constante Global
-
 g 0.001
 NADtot 10
 Atot 15
@@ -8,9 +6,6 @@ fm 0.01
 FRT 0.037
 kGPDH 0.0005
 FBP 5.
-
-# Paramètres p1 à p24
-
 p1 400
 p2 1
 p3 0.01

@@ -15,4 +15,4 @@ struct etat{
 };
 
 
-std::map<std::string, double> params(const std::string& nomfichier);
+std::map<std::string, double> parameters(const std::string& nomfichier);
