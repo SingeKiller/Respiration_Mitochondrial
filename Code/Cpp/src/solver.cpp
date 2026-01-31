@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cmath>
 #include "writer.hpp"
+#include "formule.hpp"
 
 
 // Initialiation du Calcium cytosolique en fonction du temps
@@ -18,109 +19,6 @@ double Ca_c(double t){
     }
     return base;
 }
-
-// Calcul de tous les flux 
-
-double J_GDH(std::map<std::string, double> params){
-    if (params["FBP"] < 0){
-        params["FBP"] = 0;
-    }
-    double J_GPDH = params["kGPDH"] * sqrt(params["FBP"]);
-    return J_GPDH;
-}
-
-
-
-double J_PDH(etat x, std::map<std::string, double> params){
-    double NAD_m = params["NAD_tot"] - x.NADH_m;
-    if (NAD_m <= 0){
-        NAD_m = 1e-16; //On eviter les valeurs négatif et nulles
-    }
-
-    double inibition = params["p1"]/(params["p1"]*x.NADH_m/NAD_m);
-    double activation = x.Ca_m/(params["p3"] + x.Ca_m);
-    return inibition * activation * params["JGPDH"];
-}
-
-
-
-double J_o(etat x, std::map<std::string, double> params){
-    double term1 = (params["p4"] * x.NADH_m) /(params["p5"] + x.NADH_m);
-    double term2 = 1 / (1 + exp(( x.deltaPsi - params["p6"])/params["p7"]));
-    return term1 * term2 ;
-}
-
-
-
-double J_Hres(etat x, std::map<std::string, double> params){
-    double term1 = (params["p8"] * x.NADH_m) /(params["p9"] + x.NADH_m);
-    double term2 = 1 / (1 + exp(( x.deltaPsi - params["p10"])/params["p11"]));
-    return term1 * term2;
-}
-
-
-double J_Hatp(etat x, std::map<std::string, double> params){
-    double ATP_m = params["ADP_tot"] - x.ADP_m;
-
-    if (ATP_m <= 0){
-        ATP_m = 1e-16; //On eviter les valeurs négatif et nulles
-    }
-
-    double term1 = params["p13"] /(params["p13"] + ATP_m);
-    double term2 = params["p12"] / (1 + exp((params["p14"] - x.deltaPsi )/params["p15"]));
-    return term1 * term2 ;
-}
-
-
-
-double J_F1F0(etat x, std::map<std::string, double> params){
-    double ATP_m = params["ADP_tot"] - x.ADP_m;
-
-    if (ATP_m <= 0){
-        ATP_m = 1e-16; //On eviter les valeurs négatif et nulles
-    }
-
-    double term1 = params["p13"] /(params["p13"] + ATP_m);
-    double term2 = params["p16"] / (1 + exp((params["p14"] - x.deltaPsi )/params["p15"]));
-    return term1 * term2 ;
-}
-
-
-
-double J_Hleak(etat x, std::map<std::string, double> params){
-    return params["p17"] * x.deltaPsi + params["p18"];
-}
-
-
-
-double J_ANT(etat x, std::map<std::string, double> params){
-    double ATP_m = params["ADP_tot"] - x.ADP_m;
-    double RAT_m = ATP_m / x.ADP_m;
-    
-    if (RAT_m <= 0){
-        RAT_m = 1e-16; //On eviter les valeurs négatif et nulles
-    }
-    double term1 = params["p19"];
-    double term2 = RAT_m / (params["p20"] + RAT_m);
-    double term3 = exp((.5 * x.deltaPsi * params["FRT"]));
-    return term1 * term2 * term3;
-}
-
-
-
-double J_uni(etat x, std::map<std::string, double> params,double t){
-    double ca_c = Ca_c(t);
-    double J_uni = ((params["p21"] * x.deltaPsi) - params["p22"])*ca_c*ca_c;
-    return J_uni;
-}
-
-
-double J_NaCa(etat x, std::map<std::string, double> params,double t){
-    double ca_c = Ca_c(t);
-    double Jnaca = params["p23"]*(x.Ca_m / ca_c)* exp(params["p24"] * x.deltaPsi);
-    return Jnaca;
-}
-
 
 //calcule des EDO differentes ( NADH(t) , ADP(t), deltaPsi(t), Ca_m(t) )
 
@@ -143,12 +41,48 @@ double dCa_m_dt(etat x, std::map<std::string,double> params, double t){
 
 // modification de l'état au cours du temps 
 
-etat solver(etat x, std::map<std::string,double> params, double t){
+etat detat_dt(etat x, std::map<std::string,double> params, double t){
     etat dx_dt;
-    dx_dt.NADH_m = dNADH_dt(dx_dt,params,t);
-    dx_dt.ADP_m = dADP_m_dt(dx_dt,params,t);
-    dx_dt.deltaPsi = ddeltapsi_dt(dx_dt,params,t);
-    dx_dt.Ca_m = dCa_m_dt(dx_dt,params,t);
+    dx_dt.NADH_m = dNADH_dt(x,params,t);
+    dx_dt.ADP_m = dADP_m_dt(x,params,t);
+    dx_dt.deltaPsi = ddeltapsi_dt(x,params,t);
+    dx_dt.Ca_m = dCa_m_dt(x,params,t);
     return dx_dt;
 }
 
+etat solver(etat x, std::map<std::string,double> params, double t,double dt){
+
+    // calcul de la pente
+    etat s1 = detat_dt(x,params,t);
+    etat x2 = {x.NADH_m + s1.NADH_m*dt/2,
+               x.ADP_m + s1.ADP_m*dt/2,
+               x.deltaPsi + s1.deltaPsi*dt/2,
+               x.Ca_m + s1.Ca_m*dt/2};
+
+
+    // calcul du milieu
+    etat s2 = detat_dt(x2,params,t + dt/2);
+    etat x3 = {x.NADH_m + s2.NADH_m*dt/2,
+               x.ADP_m + s2.ADP_m*dt/2,
+               x.deltaPsi + s2.deltaPsi*dt/2,
+               x.Ca_m + s2.Ca_m*dt/2};
+
+    // calcul du milieu 
+    etat s3 = detat_dt(x3,params,t + dt/2);
+    etat x4 = {x.NADH_m + s3.NADH_m*dt,
+               x.ADP_m + s3.ADP_m*dt,
+               x.deltaPsi + s3.deltaPsi*dt,
+               x.Ca_m + s3.Ca_m*dt};
+
+    // calcul de la fin
+
+    etat s4 = detat_dt(x4,params,t + dt);
+
+    // mise a jour de l'état final
+    x.NADH_m = x.NADH_m + (dt/6)*(s1.NADH_m + 2*s2.NADH_m + 2*s3.NADH_m + s4.NADH_m);
+    x.ADP_m = x.ADP_m + (dt/6)*(s1.ADP_m + 2*s2.ADP_m + 2*s3.ADP_m + s4.ADP_m);
+    x.deltaPsi = x.deltaPsi + (dt/6)*(s1.deltaPsi + 2*s2.deltaPsi + 2*s3.deltaPsi + s4.deltaPsi);
+    x.Ca_m = x.Ca_m + (dt/6)*(s1.Ca_m + 2*s2.Ca_m + 2*s3.Ca_m + s4.Ca_m);
+
+    return x;
+}

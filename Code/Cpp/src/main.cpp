@@ -1,5 +1,6 @@
 #include"solver.hpp"
 #include"writer.hpp"
+#include"formule.hpp"
 
 
 
@@ -21,22 +22,22 @@ int main(int argc, char** argv){
     // paramètres du modèle
     std::map<std::string,double>params = parameters("parameters.txt");
 
-    std::cout << params["p4"]<<std::endl;
+    std::cout << params["p4"]<<std::endl;  //test d'affichage
     //on génère un fichier d'ecriture de sortie
 
-    std::ofstream sortie("resultat.txt");
-    sortie << "t" << "\t"<< "NADH_m" << "\t" << "ADP_m" << "\t" << "deltaPsi" << "\t" << "Ca_m" << std::endl;
+    std::ofstream sortie("resultats/resultat.txt");
+    sortie << "t" << "\t"<< "NADH_m" << "\t" << "ADP_m" << "\t" << "deltaPsi" << "\t" << "Ca_m" << "\t" << "Ca_c" << "\t" << "FBP" << std::endl;
     double t=0.0;
-    double delta_t=0.001; // pas de temps en milisecondes
+    double dt=0.001; // pas de temps en milisecondes
     double tfinal = std::stod(argv[5]);
 
 
     // boucle sur le temps pour generé un fichier lisible pour intérpretation graphique
     while (t <= tfinal){
-        sortie << t << "\t" << x.NADH_m << "\t" << x.ADP_m << "\t" << x.deltaPsi << "\t" << x.Ca_m << std::endl;
-        etat dx_dt = solver(x, params, t);
+        sortie << t << "\t" << x.NADH_m << "\t" << x.ADP_m << "\t" << x.deltaPsi << "\t" << x.Ca_m << "\t" << Ca_c(t) << "\t" << params["FBP"] << std::endl;
+        etat dx_dt = solver(x, params, t, dt);
         x = dx_dt;
-        t += delta_t;
+        t += dt;
     }
 
     sortie.close();
