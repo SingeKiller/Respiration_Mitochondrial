@@ -7,14 +7,12 @@ set grid
 input = "resultats/resultat.txt"
 outdir = "plots"
 
-system(sprintf("mkdir %s 2> NUL", outdir))
-
 set key autotitle columnhead
 
 set terminal pngcairo size 1400,900 font ",12"
-set output sprintf("%s/resultats_multiplot.png", outdir)
+set output sprintf("%s/resultats_graph.png", outdir)
 
-set multiplot layout 2,3 title "Simulation mitochondrie (resultat.txt)"
+set multiplot layout 2,3 title "Simulation figure mitochondrie (resultat.txt)"
 
 set xlabel "t"
 set ylabel "NADH_m"
@@ -71,6 +69,20 @@ set title "Ca_m vs t"
 set xlabel "t"
 set ylabel "Ca_m"
 plot input every ::1 using 1:5 with lines lw 2
+set output
+
+set output sprintf("%s/Ca_c.png", outdir)
+set title "Ca_c vs t"
+set xlabel "t"
+set ylabel "Ca_c"
+plot input every ::1 using 1:6 with lines lw 2
+set output
+
+set output sprintf("%s/FBP.png", outdir)
+set title "FBP vs t"
+set xlabel "t"
+set ylabel "FBP"
+plot input every ::1 using 1:7 with lines lw 2
 set output
 
 # Done
