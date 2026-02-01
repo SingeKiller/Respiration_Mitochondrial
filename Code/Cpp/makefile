@@ -5,7 +5,7 @@ OBJDIR = build
 # fichiers objets
 OBJS = $(OBJDIR)/main.o $(OBJDIR)/solver.o $(OBJDIR)/writer.o $(OBJDIR)/formule.o
 OPTIM_FLAGS = -O3
-RES = resultat.txt
+RES = resultats
 
 #Targets
 Target = main
@@ -14,6 +14,9 @@ all: $(Target) #cible par défaut
 
 $(OBJDIR): #crée le dossier build s'il n'existe pas
 	mkdir -p $(OBJDIR)
+	
+$(RES):
+	mkdir -p $(RES)
 
 $(Target): $(OBJS) 	#cible principale
 	$(CXX) $(CXXFLAGS) -o $(Target) $(OBJS)

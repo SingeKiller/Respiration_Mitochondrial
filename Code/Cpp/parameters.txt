@@ -6,6 +6,13 @@ fm 0.01
 FRT 0.037
 kGPDH 0.0005
 FBP 5.
+FBP_base 0
+FBP_t_step 2
+FBP_step1 5
+FBP_step2 10
+FBP_step3 15
+Ca_c_const 0.1
+t_equil 0
 p1 400
 p2 1
 p3 0.01
@@ -23,7 +30,7 @@ p14 190
 p15 8.5
 p16 35
 p17 0.002
-p18 -0.03
+p18 0.03
 p19 0.35
 p20 2
 p21 0.01

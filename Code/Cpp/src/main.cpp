@@ -1,6 +1,7 @@
 #include"solver.hpp"
 #include"writer.hpp"
 #include"formule.hpp"
+#include <filesystem>
 
 
 
@@ -24,6 +25,7 @@ int main(int argc, char** argv){
 
     std::cout << params["p4"]<<std::endl;  //test d'affichage
     //on génère un fichier d'ecriture de sortie
+    std::filesystem::create_directories("resultats");
 
     std::ofstream sortie("resultats/resultat.txt");
     sortie << "t" << "\t"<< "NADH_m" << "\t" << "ADP_m" << "\t" << "deltaPsi" << "\t" << "Ca_m" << "\t" << "Ca_c" << "\t" << "FBP" << std::endl;

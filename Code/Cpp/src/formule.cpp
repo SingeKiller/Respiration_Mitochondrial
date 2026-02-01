@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <vector>
 #include <string>
@@ -26,7 +25,7 @@ double J_PDH(etat x, std::map<std::string, double> params){
         NAD_m = 1e-16; //On eviter les valeurs négatif et nulles
     }
 
-    double inibition = params["p1"]/(params["p1"]*x.NADH_m/NAD_m);
+    double inibition = params["p1"]/(params["p2"] + x.NADH_m/NAD_m);
     double activation = x.Ca_m/(params["p3"] + x.Ca_m);
     return inibition * activation * J_GDH(params);
 }
