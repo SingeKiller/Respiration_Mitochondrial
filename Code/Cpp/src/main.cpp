@@ -22,7 +22,7 @@ int main(int argc, char** argv){
 
     // paramètres du modèle
     std::map<std::string,double>params = parameters("parameters.txt");
-
+    std::filesystem::create_directories("resultats");
     std::cout << params["p4"]<<std::endl;  //test d'affichage
     //on génère un fichier d'ecriture de sortie
     std::filesystem::create_directories("resultats");
