@@ -5,6 +5,7 @@
 #include <map>
 #include <fstream>
 #include <cmath>
+#include "formule.hpp"
 #include "writer.hpp"
 
 
@@ -12,13 +13,17 @@
 
 double Ca_c(double t);
 
-// Equation differentiels ordinaires
-double dNADH_dt(etat x, std::map<std::string, double> params,double t);
-double dADP_m_dt(etat x, std::map<std::string, double> params, double t);
-double ddeltapsi_dt(etat x, std::map<std::string, double> params, double t);
-double dCa_m_dt(etat x, std::map<std::string,double> params, double t);
+
+std::vector<double> add(const std::vector<double>& a, const std::vector<double>& b);
+std::vector<double> mult(const std::vector<double>& a, double k);
 
 // Evolution de l'etat au cours du temps a chaque pas de temps t
 
-etat detat_dt(etat x, std::map<std::string,double> params, double t);
-etat solver(etat x, std::map<std::string,double> params, double t,double dt);
+std::vector<double> solver(
+	std::vector<double> x,
+    entree I,
+	const std::map<std::string,double>& params,
+	double t,
+	double dt,
+	std::vector<double> (*dxdt)(const std::vector<double>&, entree, const std::map<std::string,double>&, double)
+);
