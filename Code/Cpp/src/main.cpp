@@ -2,6 +2,7 @@
 #include"writer.hpp"
 #include"formule.hpp"
 #include <filesystem>
+#include <iomanip>
 
 
 double ms_to_min(double t_ms){
@@ -23,9 +24,9 @@ entree FBP_var(double t,std::map<std::string,double> params, double FBP_0){
 }
 
 
-entree Ca_c_var(double t,std::map<std::string,double> params){
+entree Ca_c_var(double t,std::map<std::string,double> params, double FBP_0){
     entree I;
-    I.FBP = params.at("const_FBP");
+    I.FBP = FBP_0;
     double t_min = ms_to_min(t);
     double init = params.at("const_Ca_c");
     double amplitude = 0.5; // μM
@@ -84,15 +85,23 @@ void variation_Ca_c( double dt,
                     double tfinal,
                     std::string nomfichier, 
                     std::map<std::string,double> params,
-                    std::vector<double> vect_etat){
+                    std::vector<double> vect_etat
+                    ,double fbp_0
+                    ,double test){
 
                         std::ofstream sortie(nomfichier.c_str());
                         sortie << "t" << "\t"<< "FBP" << "\t" << "Ca_c" << "\t" << "NADH_m" << "\t" << "Ca_m" << "\t" << "deltaPsi" << "\t" << "ATP_m"<<"\t"<< "J_o" << std::endl;
                         Bertram X;
                         double t = 0.;
+                        if (test == 1.){
+                            params["p3"]= 0;
+                        }
+                        if (test == 2.){
+                            params["p21"]= 0.02;
+                        }
                         double tfinal_ms = tfinal * 60000.; // conversion en ms
                         while (t<=tfinal_ms){
-                            entree I = Ca_c_var(t,params);
+                            entree I = Ca_c_var(t,params,fbp_0);
                             double ATP_m = X.ATP_M(vect_etat,params);
                             double jo = X.J_o(vect_etat,params);
 
@@ -134,29 +143,47 @@ int main(int argc, char** argv){
 
 
     std::filesystem::create_directories("resultats");
-    variation_FBP(dt,
-                    tfinal,
-                    std::string("resultats/variation_FBP.txt"),
-                    params,
-                    vect_etat,
-                    5.);
-    variation_FBP(dt,
-                    tfinal,
-                    std::string("resultats/variation_FBP_10.txt"),
-                    params,
-                    vect_etat,
-                    10.);
-    variation_FBP(dt,
-                    tfinal,
-                    std::string("resultats/variation_FBP_15.txt"),
-                    params,
-                    vect_etat,
-                    15.);
+    // variation_FBP(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_FBP.txt"),
+    //                 params,
+    //                 vect_etat,
+    //                 5.);
+    // variation_FBP(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_FBP_10.txt"),
+    //                 params,
+    //                 vect_etat,
+    //                 10.);
+    // variation_FBP(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_FBP_15.txt"),
+    //                 params,
+    //                 vect_etat,
+    //                 15.);
 
+    // variation_Ca_c(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_Ca_c.txt"),
+    //                 params,
+    //                 vect_etat,5.,
+    //                 0.);
+
+    // variation_Ca_c(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_Ca_c_5.txt"),
+    //                 params,
+    //                 vect_etat,
+    //                 5.,
+    //                 1.);
+    
     variation_Ca_c(dt,
                     tfinal,
-                    std::string("resultats/variation_Ca_c.txt"),
+                    std::string("resultats/variation_Ca_c_10.txt"),
                     params,
-                    vect_etat);
-    return 0;  
+                    vect_etat,
+                    5.,
+                    2.);
+
+    return 0; 
 }
