@@ -34,7 +34,7 @@ double Bertram::J_GPDH(std::map<std::string, double> params){
         params["FBP"] = 0;
     }
     // JGPDH = kGPDH * FBP  (FBP en μM)
-    double J_GPDH = params["kGPDH"] * params["FBP"];
+    double J_GPDH = params["kGPDH"] * sqrt(params["FBP"]);
     return J_GPDH;
 }
 
@@ -148,8 +148,8 @@ std::vector<double> Bertram::dxdt(const std::vector<double>& x,entree I, std::ma
     double jnaca = this->J_NaCa(x,params,I.Ca_c);
     
     std::vector<double> dx(taille);
-    dx[NADH] = params.at("g") * ( jpdh - jo);
-    dx[ADP] = params.at("g") * (jant - jf1f0);
+    dx[NADH] =  ( jpdh - jo);
+    dx[ADP] =  (jant - jf1f0);
     dx[DPSI] = (jhres - jhatp - jant - jhleak - jnaca - 2*juni)/params.at("Cm");
     dx[CA_m] = params.at("fm") * (juni - jnaca);
     return dx;
