@@ -1,6 +1,8 @@
 #include"solver.hpp"
 #include"writer.hpp"
 #include"formule.hpp"
+#include"teste.hpp"
+#include <cstdlib>
 #include <filesystem>
 #include <iomanip>
 
@@ -122,8 +124,16 @@ void variation_Ca_c( double dt,
 
 int main(int argc, char** argv){
 
+    if (argc == 2 && std::string(argv[1]) == "test"){
+        std::filesystem::create_directories("resultats");
+        std::filesystem::create_directories("plots");
+        teste_solver_convergence();
+        std::system("gnuplot plot_solver_convergence.gp");
+        return 0;
+    }
+
     if (argc != taille + 2){
-        std::cerr << "Usage: tfinal; NADH_m; ADP_m; Dpsi; Ca_m" << std::endl;
+        std::cerr << "Usage: test | tfinal; NADH_m; ADP_m; Dpsi; Ca_m" << std::endl;
         return 1;
     }
     std::filesystem::create_directories("resultats");
@@ -177,13 +187,13 @@ int main(int argc, char** argv){
     //                 5.,
     //                 1.);
     
-    variation_Ca_c(dt,
-                    tfinal,
-                    std::string("resultats/variation_Ca_c_10.txt"),
-                    params,
-                    vect_etat,
-                    5.,
-                    2.);
+    // variation_Ca_c(dt,
+    //                 tfinal,
+    //                 std::string("resultats/variation_Ca_c_10.txt"),
+    //                 params,
+    //                 vect_etat,
+    //                 5.,
+    //                 2.);
 
     return 0; 
 }
