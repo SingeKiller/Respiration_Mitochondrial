@@ -7,9 +7,7 @@
 #include <iomanip>
 
 
-double ms_to_min(double t_ms){
-    return t_ms / 60000.0;
-}
+
 
 entree FBP_var(double t,std::map<std::string,double> params, double FBP_0){
     entree I;
@@ -38,16 +36,6 @@ entree Ca_c_var(double t,std::map<std::string,double> params, double FBP_0){
     
     I.Ca_c = pulse ? amplitude : init;  // c'est un IF else synthetique
     return I;
-}
-
-std::vector<double> dxdt_(
-    const std::vector<double>& x,
-    entree I,
-    const std::map<std::string,double>& params,
-    double t
-){
-    Bertram model;
-    return model.dxdt(x, I, params, t);
 }
 
 
@@ -133,7 +121,7 @@ int main(int argc, char** argv){
     }
 
     if (argc != taille + 2){
-        std::cerr << "Usage: test | tfinal; NADH_m; ADP_m; Dpsi; Ca_m" << std::endl;
+        std::cerr << "Usage: test "<<"\n"<<" Bertram standard : tfinal; NADH_m; ADP_m; Dpsi; Ca_m "<<"\n"<<"Bertram etendu : tfinal; NADH_m; ADP_m; Dpsi; Ca_m; ADP_c" << std::endl;
         return 1;
     }
     std::filesystem::create_directories("resultats");
@@ -142,17 +130,17 @@ int main(int argc, char** argv){
     vect_etat[ADP] = std::stod(argv[3]);
     vect_etat[DPSI] = std::stod(argv[4]);
     vect_etat[CA_m] = std::stod(argv[5]);
+
+    try { vect_etat[ADP_c] = std::stod(argv[6]); } 
+    catch (const std::exception& e) { vect_etat[ADP_c] = 0.0; }
+
     double tfinal = std::stod(argv[1]); // en min
     double dt = 1.0; // pas de temps en ms
     // paramètres du modèle
 
     std::map<std::string,double>params = parameters("parameters.txt");
     std::filesystem::create_directories("resultats");
-    std::cout << params["p4"] << vect_etat[3] <<std::endl;  //test d'affichage
-    //on génère un fichier d'ecriture de sortie
-
-
-    std::filesystem::create_directories("resultats");
+    
     // variation_FBP(dt,
     //                 tfinal,
     //                 std::string("resultats/variation_FBP.txt"),

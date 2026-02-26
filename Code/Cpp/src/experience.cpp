@@ -26,17 +26,8 @@ void experience::variation_FBP( double dt,
                             entree I = FBP_var(t,params,FBP_0);
                             double ATP_m = X.ATP_M(vect_etat,params);
                             double jo = X.J_o(vect_etat,params);
-
-                            sortie << ms_to_min(t) << "\t" 
-                            << I.FBP << "\t" 
-                            << I.Ca_c << "\t" 
-                            << vect_etat[NADH] << "\t" 
-                            << vect_etat[CA_m] << "\t" 
-                            << vect_etat[DPSI] << "\t" 
-                            << ATP_m << "\t" 
-                            << jo << std::endl;
-                            
-                            vect_etat = solver(vect_etat, I, params, t, dt, dxdt_);
+                            X.write(sortie, t, I.FBP, I.Ca_c, vect_etat[NADH], vect_etat[CA_m], vect_etat[DPSI], ATP_m, jo);                            
+                            //vect_etat = solver(vect_etat, I, params, t, dt, dxdt_);
                             t += dt;
                         }
                         sortie.close();
@@ -62,17 +53,8 @@ void experience::variation_Ca_c( double dt,
                             entree I = Ca_c_var(t,params,fbp_0);
                             double ATP_m = X.ATP_M(vect_etat,params);
                             double jo = X.J_o(vect_etat,params);
-
-                            sortie << ms_to_min(t) << "\t" 
-                            << I.FBP << "\t" 
-                            << I.Ca_c << "\t" 
-                            << vect_etat[NADH] << "\t"
-                            << vect_etat[CA_m] << "\t" 
-                            << vect_etat[DPSI] << "\t" 
-                            << ATP_m << "\t" 
-                            << jo << std::endl;
-                            
-                            vect_etat = solver(vect_etat, I, params, t, dt, dxdt_);
+                            X.write(sortie, t, I.FBP, I.Ca_c, vect_etat[NADH], vect_etat[CA_m], vect_etat[DPSI], ATP_m, jo);
+                            //vect_etat = solver(vect_etat, I, params, t, dt, dxdt_);
                             t += dt;
                         }
                         sortie.close();

@@ -7,12 +7,13 @@
 #include <cmath>
 #include "writer.hpp"
 
-constexpr std::size_t taille = 4; // modifier si on ajoute des parametres
+constexpr std::size_t taille = 4; // taille modèle Bertram original
+constexpr std::size_t taille_etendue = 5; // taille modèle étendu 
 constexpr std::size_t NADH = 0;
 constexpr std::size_t ADP = 1;
 constexpr std::size_t DPSI = 2;
 constexpr std::size_t CA_m = 3;
-//ici on peux qjouter des parametres si besoin
+constexpr std::size_t ADP_c = 4;
 
 // parametre de ;odification du milieu
 
@@ -20,6 +21,17 @@ struct entree{
     double Ca_c;
     double FBP;
 };
+
+double ms_to_min(double t_ms){
+    return t_ms / 60000.0;
+}
+
+std::vector<double> dxdt_(
+    const std::vector<double>& x,
+    entree I,
+    const std::map<std::string,double>& params,
+    double t);
+
 
 // Calcul de tous les flux
 class Bertram {
@@ -43,7 +55,8 @@ class Bertram {
         double J_uni(const std::vector<double>& x, const std::map<std::string, double>& params, double Ca_c);
         double J_NaCa(const std::vector<double>& x, const std::map<std::string, double>& params, double Ca_c);
 
-        std::vector<double> dxdt(const std::vector<double>& x,entree I, std::map<std::string,double> params, double t);
+        virtual std::vector<double> dxdt(const std::vector<double>& x,entree I, std::map<std::string,double> params, double t);
         
+        void write(std::ofstream& sortie, double t, double FBP, double Ca_c, double NADH_m, double Ca_m, double DPSI, double ATP_m, double J_o);
     };
 

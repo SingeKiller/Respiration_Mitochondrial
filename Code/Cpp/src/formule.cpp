@@ -9,6 +9,16 @@
 #include "solver.hpp"
 
 
+std::vector<double> dxdt_(
+    const std::vector<double>& x,
+    entree I,
+    const std::map<std::string,double>& params,
+    double t
+){
+    Bertram model;
+    return model.dxdt(x, I, params, t);
+}
+
 double Bertram::NAD_m(const std::vector<double>& x, const std::map<std::string, double>& params){
     double NAD_m = params.at("NADtot") - x[NADH];
 
@@ -153,4 +163,15 @@ std::vector<double> Bertram::dxdt(const std::vector<double>& x,entree I, std::ma
     dx[DPSI] = (jhres - jhatp - jant - jhleak - jnaca - 2*juni)/params.at("Cm");
     dx[CA_m] = params.at("fm") * (juni - jnaca);
     return dx;
+}
+
+void Bertram::write(std::ofstream& sortie, double t, double FBP, double Ca_c, double NADH_m, double Ca_m, double DPSI, double ATP_m, double J_o){
+    sortie << ms_to_min(t) << "\t" 
+            << FBP << "\t" 
+            << Ca_c << "\t" 
+            << NADH_m << "\t" 
+            << Ca_m << "\t" 
+            << DPSI << "\t" 
+            << ATP_m << "\t" 
+            << J_o << std::endl;
 }
