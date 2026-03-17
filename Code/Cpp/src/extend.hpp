@@ -2,13 +2,8 @@
 
 #include "formule.hpp"
 #include "solver.hpp"
-#include "writer.hpp"
 
-// Structure pour les ajouts d'ADP
-struct ADP_ajout {
-    double ADP_c_plus;  // [ADP]+c,i : concentration ajoutée
-    double t_plus;      // t+i : temps de l'ajout
-};
+#include <string>
 
 class BE : public Bertram {
     public : 
@@ -17,14 +12,35 @@ class BE : public Bertram {
         // Reutilisation de dxdt pour le modèle étendu
         std::vector<double> dxdt(const std::vector<double>& x,
                                 entree I, 
-                                std::map<std::string,double> params, 
+                                const ModelParams& params,
                                 double t) override;
+
+        // Flux ANT selon l'equation 35
+        double J_ANT(const std::vector<double>& x, const ModelParams& params) override;
         
-        // Fonction pour calculer J_ADP,ext
-        double J_ADP_ext(const std::vector<double>& x,
-                        const std::map<std::string,double>& params,
-                        double t);
-        
+        // Derivee temporelle d/dt(J_ADP,ext)
+        double J_ADP_ext(const ModelParams& params, double t);
+                                        
         // Calcul de [ATP]c
-        double ATP_c(const std::vector<double>& x,const std::map<std::string,double>& params);
+        double ATP_c(const std::vector<double>& x,const ModelParams& params);
+
+        // Lance une simulation et ecrit Jo(t) dans un fichier
+        void simulate_Jo_timecourse(std::vector<double> etat_initial,
+                        const ModelParams& params,
+                        entree I,
+                        double dt_ms,
+                        double tfinal_min,
+                        const std::string& output_file);
+
+        // Lance une simulation BE avec 2 pulses ADP_c et ecrit directement O2 normalise integre
+        void simulate_o2_normalized_integrated_with_pulses(std::vector<double> etat_initial,
+                const ModelParams& params,
+                entree I,
+                double dt_ms,
+                double tfinal_min,
+                double pulse1_time_min,
+                double pulse1_adp_c,
+                double pulse2_time_min,
+                double pulse2_adp_c,
+                const std::string& output_file);
 };

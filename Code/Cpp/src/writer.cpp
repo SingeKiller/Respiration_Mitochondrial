@@ -1,14 +1,15 @@
 #include "writer.hpp"
 #include "solver.hpp"
 
+#include <sstream>
+
 
 
 std::map<std::string, double> parameters(const std::string& nomfichier) {
 
 	std::map<std::string, double> parameters;
-	std::string key;
 	std::ifstream file(nomfichier);
-	double valeur;
+	std::string line;
 
 	// petit erreur affichage même si lu correctement
 	if (!file.is_open()) {
@@ -16,9 +17,22 @@ std::map<std::string, double> parameters(const std::string& nomfichier) {
 		return parameters;
 	}
 	
-	// erreur dans la lecture du fichier
-	while (file >> key >> valeur) {
-		parameters[key] = valeur;
+	while (std::getline(file, line)) {
+		if (line.empty()) {
+			continue;
+		}
+
+		const std::size_t comment_pos = line.find('#');
+		if (comment_pos != std::string::npos) {
+			line = line.substr(0, comment_pos);
+		}
+
+		std::istringstream iss(line);
+		std::string key;
+		double valeur;
+		if (iss >> key >> valeur) {
+			parameters[key] = valeur;
+		}
 	}
 
 	file.close();

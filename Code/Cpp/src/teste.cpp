@@ -5,17 +5,16 @@
 #include <fstream>
 #include<iostream>
 #include <iomanip>
-#include <map>
 #include <vector>
 
 
 std::vector<double> dxdt_exp(
     const std::vector<double>& x,
     entree /*I*/,
-    const std::map<std::string, double>& params,
+    const ModelParams& params,
     double /*t*/
 ) {
-    const double k = params.at("k");
+    const double k = params.k;
     return { k * x[0] };
 }
 
@@ -24,8 +23,8 @@ void teste_solver_convergence() {
     const double k = 100.0;
     const double t_final = 0.001; // plus court pour eviter overflow avec k eleve
 
-    std::map<std::string, double> test;
-    test["k"] = k;
+    ModelParams test;
+    test.k = k;
 
     entree I;
     I.Ca_c = 0.0;

@@ -4,6 +4,7 @@
 #include <map>
 #include <fstream>
 #include <cmath>
+#include <functional>
 #include "solver.hpp"
 #include "writer.hpp"
 #include "formule.hpp"
@@ -30,10 +31,10 @@ std::vector<double> mult(const std::vector<double>& a, double k){
 std::vector<double> solver(
                         std::vector<double> x,
                         entree I,
-                        const std::map<std::string,double>& params,
+                        const ModelParams& params,
                         double t,
                         double dt,
-                        std::vector<double> (*dxdt)(const std::vector<double>&, entree, const std::map<std::string,double>&, double)){
+                        const std::function<std::vector<double>(const std::vector<double>&, entree, const ModelParams&, double)>& dxdt){
 
     // calcul de la pente
     std::vector<double> s1 = dxdt(x,I,params,t);

@@ -7,20 +7,15 @@ FRT 0.037
 kGPDH 0.0005
 const_FBP 5
 const_Ca_c 0.1
-
-# Paramètres ADP cytoplasmique
 Atot_c 15000
 ADP_c_0 500
 gamma 0.001
 tau_plus 1000
-
-# 2 ajouts d'ADP par expérience
 n_ajouts 2
-ADP_c_plus_0 1000
-t_plus_0 60000
-ADP_c_plus_1 1500
-t_plus_1 120000
-
+ADP_c_plus_0 170
+t_plus_0 72245.3999972649
+ADP_c_plus_1 1000
+t_plus_1 128101.79999515
 p1 400
 p2 1
 p3 0.01
