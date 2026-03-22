@@ -35,20 +35,24 @@ struct ModelParams {
     double fm = 0.01;
     double kGPDH = 0.0;
 
-    // Parametres ANT (equation 35)
+    // Parametres ANT
     double VmaxANT = 0.35;
     double kANT_c_num = 0.8;
     double kANT_c_den = 0.11;
     double kANT_m_den = 7.2;
-    double Atot_c = 15000.0;
-    double ADP_c_0 = 0.0;
-    double tau_plus = 1000.0;
+    double Atot_c = 0.;
+    double ADP_c_0 = 500.0;
+    double ADP_c_plus_0 = 330.0;
+    double ADP_c_plus_1 = 1000.0;
+    double tau_plus = 0.05;
     
     std::vector<ADP_ajout> adp_ajouts;
     double const_FBP = 5.0;
     double const_Ca_c = 0.1;
+
     double dt_ms = 1.0;
     double tfinal_min = 10.0;
+
     double pre_equil_min = 2.0;
     double k = 0.0;
 };
@@ -95,6 +99,7 @@ class Bertram {
         double adp_value() const { return adp_; }
         double dpsi_value() const { return dpsi_; }
         double ca_m_value() const { return ca_m_; }
+
         void sync_state(const std::vector<double>& x);
 
     private:

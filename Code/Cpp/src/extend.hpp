@@ -26,21 +26,21 @@ class BE : public Bertram {
 
         // Lance une simulation et ecrit Jo(t) dans un fichier
         void simulate_Jo_timecourse(std::vector<double> etat_initial,
-                        const ModelParams& params,
-                        entree I,
-                        double dt_ms,
-                        double tfinal_min,
-                        const std::string& output_file);
-
-        // Lance une simulation BE avec 2 pulses ADP_c et ecrit directement O2 normalise integre
-        void simulate_o2_normalized_integrated_with_pulses(std::vector<double> etat_initial,
                 const ModelParams& params,
                 entree I,
                 double dt_ms,
                 double tfinal_min,
-                double pulse1_time_min,
-                double pulse1_adp_c,
-                double pulse2_time_min,
-                double pulse2_adp_c,
                 const std::string& output_file);
+
+        // Variante avec 2 pulses ADP_c explicites
+        void simulate_Jo_timecourse(std::vector<double> etat_initial,
+                        const ModelParams& params,
+                        entree I,
+                        double dt_ms,
+                        double tfinal_min,
+                        double pulse1_time_min,
+                        double pulse1_adp_c,
+                        double pulse2_time_min,
+                        double pulse2_adp_c,
+                        const std::string& output_file);
 };

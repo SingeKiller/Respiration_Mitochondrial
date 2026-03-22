@@ -1,9 +1,9 @@
 CXX = g++ 	
-SRC = src/main.cpp src/solver.cpp src/writer.cpp src/formule.cpp src/extend.cpp src/teste.cpp # fichiers sources
+SRC = src/main.cpp src/solver.cpp src/writer.cpp src/formule.cpp src/extend.cpp src/teste.cpp src/figure_12.cpp # fichiers sources
 CXXFLAGS = -Wall -DDEBUG -std=c++17 # options de compilation
 OBJDIR = build
 # fichiers objets
-OBJS = $(OBJDIR)/main.o $(OBJDIR)/solver.o $(OBJDIR)/writer.o $(OBJDIR)/formule.o $(OBJDIR)/extend.o $(OBJDIR)/teste.o
+OBJS = $(OBJDIR)/main.o $(OBJDIR)/solver.o $(OBJDIR)/writer.o $(OBJDIR)/formule.o $(OBJDIR)/extend.o $(OBJDIR)/teste.o $(OBJDIR)/figure_12.o
 OPTIM_FLAGS = -O3
 RES = resultats
 
