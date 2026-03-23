@@ -158,6 +158,4 @@ int main(int argc, char** argv){
     //                 std::vector<double>{35.7411, 13351.0, 152.271, 0.0369},
     //                 5.,
     //                 2.);
-
-    return 0; 
 }
