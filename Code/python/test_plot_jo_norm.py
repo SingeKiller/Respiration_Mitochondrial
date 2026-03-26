@@ -65,7 +65,7 @@ def main():
     axes[2].plot(t3, y3, color="tab:green", lw=1.5)
     axes[2].set_ylabel("O2_norm")
     axes[2].set_xlabel("Temps (min)")
-    axes[2].set_xlim(14.0, 25.0)
+    axes[2].set_xlim(0.0, 25.0)
     axes[2].grid(alpha=0.25)
 
     fig.tight_layout()
