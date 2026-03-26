@@ -72,14 +72,41 @@ void write_normalized_jo(const std::string& in_file, const std::string& out_file
         throw std::runtime_error("Aucune donnee Jo trouvee dans: " + in_file);
     }
 
-    double min_jo = jo_vals[0];
-    double max_jo = jo_vals[0];
-    for (double v : jo_vals) {
-        if (v < min_jo) {
-            min_jo = v;
+    // Normalize using the analysis window from 14 to 20 min.
+    const double norm_start_min = 14.0;
+    const double norm_end_min = 20.0;
+    bool found_window_point = false;
+    double min_jo = 0.0;
+    double max_jo = 0.0;
+    for (std::size_t i = 0; i < jo_vals.size(); ++i) {
+        if (t_vals[i] < norm_start_min || t_vals[i] > norm_end_min) {
+            continue;
         }
-        if (v > max_jo) {
-            max_jo = v;
+        if (!found_window_point) {
+            min_jo = jo_vals[i];
+            max_jo = jo_vals[i];
+            found_window_point = true;
+        } else {
+            if (jo_vals[i] < min_jo) {
+                min_jo = jo_vals[i];
+            }
+            if (jo_vals[i] > max_jo) {
+                max_jo = jo_vals[i];
+            }
+        }
+    }
+
+    // Fallback if no sample exists in the [14, 20] min window.
+    if (!found_window_point) {
+        min_jo = jo_vals[0];
+        max_jo = jo_vals[0];
+        for (double v : jo_vals) {
+            if (v < min_jo) {
+                min_jo = v;
+            }
+            if (v > max_jo) {
+                max_jo = v;
+            }
         }
     }
 
@@ -136,17 +163,31 @@ void write_o2_from_jo(const std::string& in_file, const std::string& out_file) {
         o2_proxy[i] = 1.0 - integ[i];
     }
 
-    const double o2_start = o2_proxy.front();
-    const double o2_end = o2_proxy.back();
-    const double denom = o2_start - o2_end;
-
     std::ofstream out(out_file.c_str());
     if (!out.is_open()) {
         throw std::runtime_error("Impossible d'ecrire le fichier O2 simule: " + out_file);
     }
 
+    const double output_start_min = 14.0;
+    bool has_output_window = false;
+    std::size_t window_start_idx = 0;
+    for (std::size_t i = 0; i < t_vals.size(); ++i) {
+        if (t_vals[i] >= output_start_min) {
+            has_output_window = true;
+            window_start_idx = i;
+            break;
+        }
+    }
+
+    const double o2_start = has_output_window ? o2_proxy[window_start_idx] : o2_proxy.front();
+    const double o2_end = o2_proxy.back();
+    const double denom = o2_start - o2_end;
+
     out << "t_min\tO2_sim_norm" << std::endl;
     for (std::size_t i = 0; i < o2_proxy.size(); ++i) {
+        if (has_output_window && t_vals[i] < output_start_min) {
+            continue;
+        }
         double o2_norm = 1.0;
         if (std::abs(denom) > 1e-16) {
             o2_norm = (o2_proxy[i] - o2_end) / denom;

@@ -18,8 +18,11 @@ class BE : public Bertram {
         // Flux ANT selon l'equation 35
         double J_ANT(const std::vector<double>& x, const ModelParams& params) override;
         
-        // Derivee temporelle d/dt(J_ADP,ext)
-        double J_ADP_ext(const ModelParams& params, double t);
+        // Somme cumulative des ajouts externes d'ADP
+        double J_ADP_ext_sum(const ModelParams& params, double t);
+
+        // Derivee temporelle de la somme, utilisee comme flux source dans d[ADP_c]/dt
+        double J_ADP_ext_dot(const ModelParams& params, double t);
                                         
         // Calcul de [ATP]c
         double ATP_c(const std::vector<double>& x,const ModelParams& params);
@@ -30,7 +33,8 @@ class BE : public Bertram {
                 entree I,
                 double dt_ms,
                 double tfinal_min,
-                const std::string& output_file);
+            const std::string& output_file,
+            const std::string& flux_output_file = "");
 
         // Variante avec 2 pulses ADP_c explicites
         void simulate_Jo_timecourse(std::vector<double> etat_initial,
@@ -42,5 +46,6 @@ class BE : public Bertram {
                         double pulse1_adp_c,
                         double pulse2_time_min,
                         double pulse2_adp_c,
-                        const std::string& output_file);
+                        const std::string& output_file,
+                        const std::string& flux_output_file = "");
 };

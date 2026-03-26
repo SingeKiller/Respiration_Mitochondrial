@@ -16,9 +16,6 @@
 #include <stdexcept>
 
 
-
-
-
 int main(int argc, char** argv){
 
     double dt = 0.01;
@@ -39,7 +36,9 @@ int main(int argc, char** argv){
     constexpr int expected_argc = 42;
     if (argc != expected_argc) {
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "  ./main p1 p2 ... p24 FRT NADtot Atot Cm fm kGPDH ADP_c_0 Atot_c const_FBP const_Ca_c dt_ms tfinal_min pulse1_time_min pulse1_adp_c pulse2_time_min pulse2_adp_c output_filename" << std::endl;
+        std::cerr << "./main p1 p2 ... p24 FRT NADtot Atot Cm fm kGPDH ADP_c_0 Atot_c "
+                     "const_FBP const_Ca_c dt_ms tfinal_min pulse1_time_min pulse1_adp_c "
+                     "pulse2_time_min pulse2_adp_c output_filename" << std::endl;
         return 1;
     }
 
@@ -70,11 +69,14 @@ int main(int argc, char** argv){
     const double pulse1_adp_c = std::stod(argv[idx++]);
     const double pulse2_time_min = std::stod(argv[idx++]);
     const double pulse2_adp_c = std::stod(argv[idx++]);
-    
+
     std::string output_filename = argv[idx++];
 
     params.ADP_c_plus_0 = pulse1_adp_c;
     params.ADP_c_plus_1 = pulse2_adp_c;
+    params.adp_ajouts.clear();
+    params.adp_ajouts.push_back({pulse1_adp_c, pulse1_time_min * 60000.0});
+    params.adp_ajouts.push_back({pulse2_adp_c, pulse2_time_min * 60000.0});
 
     dt = params.dt_ms;
     tfinal = params.tfinal_min;
@@ -99,6 +101,7 @@ int main(int argc, char** argv){
     const std::string o2_norm_path = std::string("resultats/") + output_filename;
     const std::string jo_raw_path = "resultats/jo_temps.txt";
     const std::string jo_norm_path = "resultats/jo_normalized.txt";
+    const std::string flux_raw_path = "resultats/fluxes_temps.txt";
     const std::string o2_from_jo_path = o2_norm_path;
 
     X.simulate_Jo_timecourse(
@@ -111,7 +114,8 @@ int main(int argc, char** argv){
         pulse1_adp_c, // ADP_c du premier pulse en uM
         pulse2_time_min, // temps du second pulse en min
         pulse2_adp_c, // ADP_c du second pulse en uM
-        jo_raw_path);
+        jo_raw_path,
+        flux_raw_path);
     
     write_normalized_jo(jo_raw_path, jo_norm_path);
     write_o2_from_jo(jo_raw_path, o2_from_jo_path);
@@ -158,4 +162,6 @@ int main(int argc, char** argv){
     //                 std::vector<double>{35.7411, 13351.0, 152.271, 0.0369},
     //                 5.,
     //                 2.);
+
+    return 0; 
 }
