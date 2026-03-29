@@ -33,12 +33,13 @@ int main(int argc, char** argv){
 
 //Teste des arguments pour lancer le parametrage de l'individue 
 
-    constexpr int expected_argc = 42;
-    if (argc != expected_argc) {
+    constexpr int expected_argc_legacy = 42;
+    constexpr int expected_argc_extended = 44;
+    if (argc != expected_argc_legacy and argc != expected_argc_extended) {
         std::cerr << "Usage:" << std::endl;
         std::cerr << "./main p1 p2 ... p24 FRT NADtot Atot Cm fm kGPDH ADP_c_0 Atot_c "
                      "const_FBP const_Ca_c dt_ms tfinal_min pulse1_time_min pulse1_adp_c "
-                     "pulse2_time_min pulse2_adp_c output_filename" << std::endl;
+                     "pulse2_time_min pulse2_adp_c [jo_norm_start_min o2_norm_start_min] output_filename" << std::endl;
         return 1;
     }
 
@@ -69,6 +70,13 @@ int main(int argc, char** argv){
     const double pulse1_adp_c = std::stod(argv[idx++]);
     const double pulse2_time_min = std::stod(argv[idx++]);
     const double pulse2_adp_c = std::stod(argv[idx++]);
+
+    double jo_norm_start_min = 14.0;
+    double o2_norm_start_min = 14.0;
+    if (argc == expected_argc_extended) {
+        jo_norm_start_min = std::stod(argv[idx++]);
+        o2_norm_start_min = std::stod(argv[idx++]);
+    }
 
     std::string output_filename = argv[idx++];
 
@@ -117,8 +125,8 @@ int main(int argc, char** argv){
         jo_raw_path,
         flux_raw_path);
     
-    write_normalized_jo(jo_raw_path, jo_norm_path);
-    write_o2_from_jo(jo_raw_path, o2_from_jo_path);
+    write_normalized_jo(jo_raw_path, jo_norm_path, jo_norm_start_min);
+    write_o2_from_jo(jo_raw_path, o2_from_jo_path, o2_norm_start_min);
     
 
     // variation_FBP(dt,

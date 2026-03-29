@@ -16,8 +16,8 @@ CPP_ARGS = [
     "400", "1", "0.01", "0.6", "100", "177", "5", "7", "100", "177",
     "5", "120", "10000", "190", "8.5", "35", "0.002", "-0.03", "0.35",
     "2", "0.01", "1.1", "0.001", "0.016", "0.037", "10000", "15000",
-    "1.8", "0.01", "0.0005", "500", "15000", "5", "0.1", "1", "25",
-    "16", "330", "19", "1000", "o2_avec_pulse_normalized.txt"
+    "1.8", "0.01", "0.0005", "0", "0.1", "15000", "0.1", "1000", "21",
+    "16.15", "330", "19.15", "1000", "o2_test_normalized.txt"
 ]
 
 SECTIONS = {
@@ -118,11 +118,26 @@ def plot_cpp_outputs(root: Path, out_dir: Path):
         )
 
     jo_norm_path = res / "jo_normalized.txt"
-    o2_path = res / "o2_avec_pulse_normalized.txt"
+    o2_candidates = [
+        res / "o2_avec_pulse_normalized.txt",  # ancien nom
+        res / "o2_test_normalized.txt",
+        res / "o2_tmp_dt10_precise_normalized.txt",
+        res / "o2_tmp_dt10_substep_normalized.txt",
+        res / "o2_tmp_dt1ms_normalized.txt",
+    ]
+    o2_path = None
+    for cand in o2_candidates:
+        if cand.exists():
+            o2_path = cand
+            break
 
-    for p in [jo_raw_path, jo_norm_path, o2_path]:
-        if not p.exists():
-            raise FileNotFoundError(f"Fichier introuvable: {p}")
+    missing = [p for p in [jo_raw_path, jo_norm_path] if not p.exists()]
+    if missing:
+        raise FileNotFoundError(f"Fichier introuvable: {missing[0]}")
+    if o2_path is None:
+        raise FileNotFoundError(
+            f"Fichier introuvable: aucun des candidats {[str(p) for p in o2_candidates]}"
+        )
 
     t1, y1 = load_two_cols(jo_raw_path)
     t2, y2 = load_two_cols(jo_norm_path)
@@ -132,22 +147,13 @@ def plot_cpp_outputs(root: Path, out_dir: Path):
     t2, y2 = window_0_25(t2, y2)
     t3, y3 = window_0_25(t3, y3)
 
-    fig, axes = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
-
-    axes[0].plot(t1, y1, color="black", lw=1.3)
-    axes[0].set_ylabel("Jo")
-    axes[0].set_title("Sorties C++ sur 0-25 min")
-    axes[0].grid(alpha=0.25)
-
-    axes[1].plot(t2, y2, color="tab:blue", lw=1.3)
-    axes[1].set_ylabel("Jo_norm")
-    axes[1].grid(alpha=0.25)
-
-    axes[2].plot(t3, y3, color="tab:green", lw=1.5)
-    axes[2].set_ylabel("O2_norm")
-    axes[2].set_xlabel("Temps (min)")
-    axes[2].set_xlim(0.0, 25.0)
-    axes[2].grid(alpha=0.25)
+    fig, axes = plt.subplots(1, 1, figsize=(10, 8))
+    
+    plt.plot(t3, y3, color="tab:green", lw=1.5)
+    plt.ylabel("O2_norm")
+    plt.xlabel("Temps (min)")
+    plt.xlim(14.0, 21.0)
+    plt.grid(alpha=0.25)
 
     fig.tight_layout()
     out_png = out_dir / "Sortie_Cpp.png"

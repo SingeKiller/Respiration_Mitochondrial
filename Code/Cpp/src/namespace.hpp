@@ -50,7 +50,7 @@ void extra_params(ModelParams& params, const std::map<std::string, double>& raw)
     }
 }
 
-void write_normalized_jo(const std::string& in_file, const std::string& out_file) {
+void write_normalized_jo(const std::string& in_file, const std::string& out_file, double norm_start_min = 14.0) {
     std::ifstream in(in_file.c_str());
     if (!in.is_open()) {
         throw std::runtime_error("Impossible d'ouvrir le fichier Jo: " + in_file);
@@ -72,8 +72,7 @@ void write_normalized_jo(const std::string& in_file, const std::string& out_file
         throw std::runtime_error("Aucune donnee Jo trouvee dans: " + in_file);
     }
 
-    // Normalize using the analysis window from 14 to 20 min.
-    const double norm_start_min = 14.0;
+    // Normalize using an analysis window that starts at norm_start_min.
     const double norm_end_min = 20.0;
     bool found_window_point = false;
     double min_jo = 0.0;
@@ -126,7 +125,7 @@ void write_normalized_jo(const std::string& in_file, const std::string& out_file
     }
 }
 
-void write_o2_from_jo(const std::string& in_file, const std::string& out_file) {
+void write_o2_from_jo(const std::string& in_file, const std::string& out_file, double output_start_min = 14.0) {
     std::ifstream in(in_file.c_str());
     if (!in.is_open()) {
         throw std::runtime_error("Impossible d'ouvrir le fichier Jo pour integration O2: " + in_file);
@@ -168,7 +167,6 @@ void write_o2_from_jo(const std::string& in_file, const std::string& out_file) {
         throw std::runtime_error("Impossible d'ecrire le fichier O2 simule: " + out_file);
     }
 
-    const double output_start_min = 14.0;
     bool has_output_window = false;
     std::size_t window_start_idx = 0;
     for (std::size_t i = 0; i < t_vals.size(); ++i) {
