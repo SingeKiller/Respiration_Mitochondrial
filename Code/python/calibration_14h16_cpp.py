@@ -34,17 +34,17 @@ JEUX_CALIBRATION = {
         "debut_jo_norm": 14.0,
         "debut_o2_norm": 14.0,
         "ajouts_adp_mM": [0.33, 1.0],
-        "pulse_times_min": [16.15, 19.15],
+        "pulse_times_min": [16.20, 18.99],
     },
-    "15h12": {
-        "fichier": "data15h12.npy",
-        "fenetres": [[10.8, 12.8], [13.3 , 14.35], [16, 17],[17.25 , 17.8]],
-        "fenetre_data": [10.8, 17.8],
-        "debut_jo_norm": 10.8,
-        "debut_o2_norm": 10.8,
-        "ajouts_adp_mM": [0.66, 1.0],
-        "pulse_times_min": [13.2, 16.7],
-    },
+    #"15h12": {
+    #    "fichier": "data15h12.npy",
+    #    "fenetres": [[10.8, 12.8], [13.3 , 14.35], [16, 17],[17.25 , 17.8]],
+    #    "fenetre_data": [10.8, 17.8],
+    #    "debut_jo_norm": 10.8,
+    #    "debut_o2_norm": 10.8,
+    #    "ajouts_adp_mM": [0.66, 1.0],
+    #    "pulse_times_min": [13.2, 16.7],
+    #},
     #"15h37": {
     #    "fichier": "data15h37.npy",
     #    "fenetres": [[10.6 , 11.3],[12.3, 12.6], [13.1 , 13.55], [14.3 , 15.7]],
@@ -78,9 +78,9 @@ OUTPUT_NAME = "o2_test_normalized.txt"
 class ConfigurationCalibration:
     def __init__(
         self,
-        population_size=16,
+        population_size=20,
         generations=5,
-        elite_size=6,
+        elite_size=4,
         init_low=0.70,
         init_high=1.30,
         mutation_low=0.97,
@@ -536,27 +536,10 @@ def calibrer_un_jeu(
     print(f"[{nom_jeu}] Ajouts ADP_c (mM) utilises: {ajouts_adp_mm}")
 
 
-def definir_pulses_par_defaut(fenetres, fenetre_data):
-    if len(fenetres) < 4:
-        raise ValueError("Il faut 4 fenetres pour estimer les temps de pulses ADP.")
-
-    pulse1 = float(fenetres[1][0]) - 0.10
-    pulse2 = float(fenetres[3][0]) - 0.55
-
-    debut = float(fenetre_data[0])
-    fin = float(fenetre_data[1])
-    pulse1 = min(max(pulse1, debut), fin)
-    pulse2 = min(max(pulse2, debut), fin)
-    if pulse2 <= pulse1:
-        pulse2 = min(fin, pulse1 + 0.5)
-
-    return [pulse1, pulse2]
-
-
 def main():
     cfg = ConfigurationCalibration(
-        population_size=12,
-        generations=2,
+        population_size=20,
+        generations=100,
         elite_size=4,
         poids_ratios=1.0,
         random_seed=42,
