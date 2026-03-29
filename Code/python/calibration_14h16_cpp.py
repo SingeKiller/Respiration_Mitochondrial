@@ -551,7 +551,7 @@ def main():
 
         fenetre_data = metadonnees.get("fenetre_data", fenetre_npy)
         tfinal_jeu = float(metadonnees.get("tfinal_min", fenetre_npy[1]))
-        pulses_jeu = list(metadonnees.get("pulse_times_min", definir_pulses_par_defaut(metadonnees["fenetres"], fenetre_data)))
+        pulses_jeu = list(metadonnees.get("pulse_times_min", []))
 
         print(f"[{nom_jeu}] Fenetre calculee depuis NPY: {fenetre_npy}")
         print(f"[{nom_jeu}] tfinal par defaut (max NPY): {fenetre_npy[1]:.2f} min")
