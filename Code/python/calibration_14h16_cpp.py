@@ -27,51 +27,51 @@ INDICES_PARAMETRES_SUPPLEMENTAIRES = {
 }
 
 JEUX_CALIBRATION = {
-    "14h16": {
-        "fichier": "data14h16.npy",
-        "fenetres": [[14.6, 15.5], [16.25, 16.8], [17.6, 18.5], [19.7, 20.5]],
-        "fenetre_data": [14.0, 21.0],
-        "debut_jo_norm": 14.0,
-        "debut_o2_norm": 14.0,
-        "ajouts_adp_mM": [0.33, 1.0],
-        "pulse_times_min": [16.20, 18.99],
+    #"14h16": {
+    #    "fichier": "data14h16.npy",
+    #    "fenetres": [[14.6, 15.5], [16.25, 16.8], [17.6, 18.5], [19.7, 20.5]],
+    #    "fenetre_data": [14.0, 21.0],
+    #    "debut_jo_norm": 14.0,
+    #    "debut_o2_norm": 14.0,
+    #    "ajouts_adp_mM": [0.33, 1.0],
+    #    "pulse_times_min": [16.1981, 18.9969],
+    #},
+    "15h12": {
+        "fichier": "data15h12.npy",
+        "fenetres": [[10.8, 12.85], [13.25, 14.8], [15.65, 16.3], [16.9, 17.8]],
+        "fenetre_data": [10.8, 17.8],
+        "debut_jo_norm": 10.8,
+        "debut_o2_norm": 10.8,
+        "ajouts_adp_mM": [0.66, 1.0],
+        "pulse_times_min": [13.1431, 16.6956],
     },
-    #"15h12": {
-    #    "fichier": "data15h12.npy",
-    #    "fenetres": [[10.8, 12.8], [13.3 , 14.35], [16, 17],[17.25 , 17.8]],
-    #    "fenetre_data": [10.8, 17.8],
-    #    "debut_jo_norm": 10.8,
-    #    "debut_o2_norm": 10.8,
-    #    "ajouts_adp_mM": [0.66, 1.0],
-    #    "pulse_times_min": [13.2, 16.7],
-    #},
-    #"15h37": {
-    #    "fichier": "data15h37.npy",
-    #    "fenetres": [[10.6 , 11.3],[12.3, 12.6], [13.1 , 13.55], [14.3 , 15.7]],
-    #    "fenetre_data": [10.6, 15.7],
-    #    "debut_jo_norm": 10.6,
-    #    "debut_o2_norm": 10.6,
-    #    "ajouts_adp_mM": [0.17, 1.0],
-    #    "pulse_times_min": [12.2, 13.75],
-    #},
-    #"16h00": {
-    #    "fichier": "data16h00.npy",
-    #    "fenetres": [[10.75 , 11.75], [12.5 , 13.75], [14.25, 15], [15.4, 16.3]],
-    #    "fenetre_data": [10.75, 16.3],
-    #    "debut_jo_norm": 10.75,
-    #    "debut_o2_norm": 10.75,
-    #    "ajouts_adp_mM": [0.66, 1.0],
-    #    "pulse_times_min": [12.4, 14.85],
-    #},
-    #"17h03": {
-    #    "fichier": "data17h03.npy",
-    #    "fenetres":  [[10.3, 11.45], [12.2 , 12.85], [13.75 , 14.8], [15.4, 17]],
-    #    "fenetre_data": [10.3, 17.0],
-    #    "debut_jo_norm": 10.3,
-    #    "debut_o2_norm": 10.3,
-    #    "ajouts_adp_mM": [0.17, 1.0],
-    #    "pulse_times_min": [12.1, 14.85],
-    #},
+    "15h37": {
+        "fichier": "data15h37.npy",
+        "fenetres": [[10.6, 11.35], [12.25, 12.65], [13.05, 13.6], [14.25, 15.7]],
+        "fenetre_data": [10.6, 15.7],
+        "debut_jo_norm": 10.6,
+        "debut_o2_norm": 10.6,
+        "ajouts_adp_mM": [0.17, 1.0],
+        "pulse_times_min": [11.9725, 14.0256],
+    },
+    "16h00": {
+        "fichier": "data16h00.npy",
+        "fenetres": [[10.75, 11.8], [12.45, 13.8], [14.2, 15.05], [15.35, 16.3]],
+        "fenetre_data": [10.75, 16.3],
+        "debut_jo_norm": 10.75,
+        "debut_o2_norm": 10.75,
+        "ajouts_adp_mM": [0.66, 1.0],
+        "pulse_times_min": [12.1288, 15.1869],
+    },
+    "17h03": {
+        "fichier": "data17h03.npy",
+        "fenetres": [[10.3, 11.5], [12.15, 12.9], [13.7, 14.85], [15.35, 17.0]],
+        "fenetre_data": [10.3, 17.0],
+        "debut_jo_norm": 10.3,
+        "debut_o2_norm": 10.3,
+        "ajouts_adp_mM": [0.17, 1.0],
+        "pulse_times_min": [11.8156, 15.0250],
+    },
 }
 OUTPUT_NAME = "o2_test_normalized.txt"
 
@@ -478,13 +478,13 @@ def relancer_cpp_depuis_csv_et_tracer(
     o2_exp_plot = o2_exp[masque_exp]
 
     figure, axe = plt.subplots(figsize=(10, 5))
-    axe.plot(temps_exp_plot, o2_exp_plot, color="tab:blue", lw=2.0, label="O2_norm experimental")
-    axe.plot(temps_sim_plot, o2_sim_plot, color="tab:red", lw=1.8, label="O2_norm modele C++ (depuis CSV)")
+    axe.plot(temps_exp_plot, o2_exp_plot, color="tab:blue", lw=2.0, label="O2 normalisé experimental")
+    axe.plot(temps_sim_plot, o2_sim_plot, color="tab:red", lw=1.8, label="O2 normalisé modele C++ (depuis CSV)")
     axe.set_xlim(t_min, t_max)
     axe.set_xlabel("Temps (min)")
-    axe.set_ylabel("O2_norm")
+    axe.set_ylabel("O2 normalisé")
     titre_fenetre = f"{t_min:.2f}-{t_max:.2f}"
-    axe.set_title(f"Comparaison O2_norm: modele C++ vs donnees experimentales ({titre_fenetre} min)")
+    axe.set_title(f"Comparaison O2 normalisé modele C++ vs donnees experimentales ({titre_fenetre} min)")
     axe.grid(alpha=0.3)
     axe.legend()
     figure.tight_layout()
