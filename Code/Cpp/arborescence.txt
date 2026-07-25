@@ -1,0 +1,47 @@
+Code/Cpp
+|-- build/
+|   |-- extend.o
+|   |-- figure_12.o
+|   |-- formule.o
+|   |-- main.o
+|   |-- solver.o
+|   |-- teste.o
+|   -- writer.o
+|-- plots/
+|   |-- resultats_graph.png
+|   |-- resultats_graph_python.png
+|   |-- resultats_graph13.png
+|   |-- resultats_graph14.png
+|   -- solver_convergence.png
+|-- resultats/
+|   |-- flux_temps.txt
+|   |-- jo_normalized.txt
+|   |-- jo_temps.txt
+|   |-- o2_test_normalized.txt
+|   |-- solver_errors.txt
+|   |-- solver_test.txt
+|   |-- variation_Ca_c.txt
+|   -- variation_FBP.txt
+|-- src/
+|   |-- extend.cpp
+|   |-- extend.hpp
+|   |-- figure_12.cpp
+|   |-- figure_12.hpp
+|   |-- formule.cpp
+|   |-- formule.hpp
+|   |-- main.cpp
+|   |-- namespace.cpp
+|   |-- namespace.hpp
+|   |-- solver.cpp
+|   |-- solver.hpp
+|   |-- teste.cpp
+|   |-- teste.hpp
+|   |-- writer.cpp
+|   -- writer.hpp
+|-- main
+|-- main.exe
+|-- makefile
+|-- plot_solver_convergence.gp
+|-- plot12_resultats.gp
+|-- plot13_resultats.gp
+-- plot14_resultats.gp

@@ -1,6 +1,0 @@
-parametre d entree P1 a p24 argv* nomdufichier sortie
-mettre les variable modele e nprivate,
-faire en sorte de sortir Jo au cour du temps pour le plot
-fixer les flux etc 
-
-sortie Jo

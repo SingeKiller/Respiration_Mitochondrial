@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import subprocess
+import time
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -38,17 +39,17 @@ JEUX_CALIBRATION = {
     #},
     "15h12": {
         "fichier": "data15h12.npy",
-        "fenetres": [[10.8, 12.85], [13.25, 14.8], [15.65, 16.3], [16.9, 17.8]],
-        "fenetre_data": [10.8, 17.8],
+        "fenetres": [[10.8, 12.85], [13.4, 15.0], [16., 17.0], [17.4, 17.8]],
+        "fenetre_data": [10.0, 17.9],
         "debut_jo_norm": 10.8,
         "debut_o2_norm": 10.8,
         "ajouts_adp_mM": [0.66, 1.0],
-        "pulse_times_min": [13.1431, 16.6956],
+        "pulse_times_min": [13.1431, 17.2056],
     },
     "15h37": {
         "fichier": "data15h37.npy",
         "fenetres": [[10.6, 11.35], [12.25, 12.65], [13.05, 13.6], [14.25, 15.7]],
-        "fenetre_data": [10.6, 15.7],
+        "fenetre_data": [10.0, 15.7],
         "debut_jo_norm": 10.6,
         "debut_o2_norm": 10.6,
         "ajouts_adp_mM": [0.17, 1.0],
@@ -56,17 +57,17 @@ JEUX_CALIBRATION = {
     },
     "16h00": {
         "fichier": "data16h00.npy",
-        "fenetres": [[10.75, 11.8], [12.45, 13.8], [14.2, 15.05], [15.35, 16.3]],
-        "fenetre_data": [10.75, 16.3],
+        "fenetres": [[10.75, 11.8], [12.45, 13.8], [14.2, 15.05], [15.4, 16.3]],
+        "fenetre_data": [10.0, 16.3],
         "debut_jo_norm": 10.75,
         "debut_o2_norm": 10.75,
         "ajouts_adp_mM": [0.66, 1.0],
-        "pulse_times_min": [12.1288, 15.1869],
+        "pulse_times_min": [12.1288, 15.2069],
     },
     "17h03": {
         "fichier": "data17h03.npy",
-        "fenetres": [[10.3, 11.5], [12.15, 12.9], [13.7, 14.85], [15.35, 17.0]],
-        "fenetre_data": [10.3, 17.0],
+        "fenetres": [[10.3, 11.5], [12.15, 12.7], [13.7, 14.85], [15.35, 17.0]],
+        "fenetre_data": [10.0, 18.0],
         "debut_jo_norm": 10.3,
         "debut_o2_norm": 10.3,
         "ajouts_adp_mM": [0.17, 1.0],
@@ -80,13 +81,16 @@ class ConfigurationCalibration:
         self,
         population_size=20,
         generations=5,
-        elite_size=4,
+        elite_size=25,
         init_low=0.70,
         init_high=1.30,
         mutation_low=0.97,
         mutation_high=1.03,
         poids_ratios=1.0,
+        poids_points_l2=0.2,
         random_seed=42,
+        checkpoint_every=5,
+        cpp_timeout_sec=600,
     ):
         self.population_size = population_size
         self.generations = generations
@@ -96,7 +100,14 @@ class ConfigurationCalibration:
         self.mutation_low = mutation_low
         self.mutation_high = mutation_high
         self.poids_ratios = poids_ratios
+        self.poids_points_l2 = poids_points_l2
         self.random_seed = random_seed
+        self.checkpoint_every = checkpoint_every
+        self.cpp_timeout_sec = cpp_timeout_sec
+
+
+def seed_generation(base_seed, generation):
+    return int(base_seed) + int(generation)
 
 def resoudre_chemins(fichier_experimental):
     racine = Path(__file__).resolve().parents[1] 
@@ -166,6 +177,17 @@ def extraire_pentes_segments(temps, signal, fenetres):
     return np.array(pentes, dtype=float)
 
 
+def valider_couverture_fenetres(temps, fenetres):
+    t_min = float(np.min(temps))
+    t_max = float(np.max(temps))
+    for debut, fin in fenetres:
+        if debut < t_min or fin > t_max:
+            raise ValueError(
+                f"Couverture temporelle sim insuffisante: sim=[{t_min:.4g}, {t_max:.4g}] "
+                f"ne couvre pas segment [{debut}, {fin}]"
+            )
+
+
 def calculer_ratios_pentes(pentes):
 
     epsilon = 1e-12
@@ -186,6 +208,24 @@ def calculer_cout_quadratique(pentes_exp, pentes_sim, ratios_exp, ratios_sim, po
     cout_pentes = float(np.dot(ecart_pentes, ecart_pentes))
     cout_ratios = float(np.dot(ecart_ratios, ecart_ratios))
     return cout_pentes + poids_ratios * cout_ratios
+
+
+def calculer_norme_l2_points(temps_exp, o2_exp, temps_sim, o2_sim):
+    debut_commun = max(float(np.min(temps_exp)), float(np.min(temps_sim)))
+    fin_commun = min(float(np.max(temps_exp)), float(np.max(temps_sim)))
+    if debut_commun >= fin_commun:
+        return float("inf")
+
+    masque_exp = (temps_exp >= debut_commun) & (temps_exp <= fin_commun)
+    temps_exp_commun = temps_exp[masque_exp]
+    o2_exp_commun = o2_exp[masque_exp]
+
+    if temps_exp_commun.size < 2:
+        return float("inf")
+
+    o2_sim_interp = np.interp(temps_exp_commun, temps_sim, o2_sim)
+    diff = o2_exp_commun - o2_sim_interp
+    return float(np.linalg.norm(diff, ord=2))
 
 
 def construire_vecteur_base_calibrable():
@@ -242,25 +282,64 @@ def preparer_arguments_cpp(
     return args_sans_sortie + [f"{debut_jo_norm:.12g}", f"{debut_o2_norm:.12g}", fichier_sortie]
 
 
-def executer_modele_cpp(executable, dossier_cpp, arguments):
-    subprocess.run([str(executable), *arguments], cwd=str(dossier_cpp), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def executer_modele_cpp(executable, dossier_cpp, arguments, timeout_sec):
+    subprocess.run(
+        [str(executable), *arguments],
+        cwd=str(dossier_cpp),
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=float(timeout_sec),
+    )
 
 
 def population_initiale(aleatoire, cfg):
     base = construire_vecteur_base_calibrable()
-    echelles = aleatoire.uniform(cfg.init_low, cfg.init_high, size=(cfg.population_size, base.size))
+    echelles = echantillonner_facteurs_normaux_tronques(
+        aleatoire,
+        cfg.init_low,
+        cfg.init_high,
+        size=(cfg.population_size, base.size),
+    )
     return base * echelles
+
+
+def echantillonner_facteurs_normaux_tronques(aleatoire, low, high, size):
+    if not (low < 1.0 < high):
+        raise ValueError(f"Bornes invalides pour une loi normale centree en 1: low={low}, high={high}")
+
+    sigma = min(1.0 - low, high - 1.0) / 3.0
+    a = (low - 1.0) / sigma
+    b = (high - 1.0) / sigma
+    return stats.truncnorm.rvs(a, b, loc=1.0, scale=sigma, size=size, random_state=aleatoire)
 
 
 def faire_evoluer_population(aleatoire, parents, cfg):
     enfants = []
-    while len(enfants) < cfg.population_size:
+    nb_enfants = max(0, cfg.population_size - len(parents))
+    while len(enfants) < nb_enfants:
         i, j = aleatoire.integers(0, len(parents), size=2)
         enfant = (parents[i] + parents[j]) / 2.0
-        mutation = aleatoire.uniform(cfg.mutation_low, cfg.mutation_high, size=parents.shape[1])
+        mutation = echantillonner_facteurs_normaux_tronques(
+            aleatoire,
+            cfg.mutation_low,
+            cfg.mutation_high,
+            size=parents.shape[1],
+        )
         enfant = enfant * mutation
         enfants.append(enfant)
-    return np.array(enfants)
+    if len(enfants) == 0:
+        return np.empty((0, parents.shape[1]), dtype=float)
+    return np.array(enfants, dtype=float)
+
+ 
+def borner_intervalle_mutation(low, high):
+    low_borne = max(1e-6, float(low))
+    high_borne = min(3.0, float(high))
+    if not (low_borne < 1.0 < high_borne):
+        low_borne = min(low_borne, 0.999)
+        high_borne = max(high_borne, 1.001)
+    return low_borne, high_borne
 
 
 def lancer_calibration(
@@ -275,7 +354,6 @@ def lancer_calibration(
     pulse_times_min,
 ):
     chemins = resoudre_chemins(fichier_experimental)
-    aleatoire = np.random.default_rng(cfg.random_seed)
 
     courbe_exp = np.load(chemins["experimental"])
     temps_exp = courbe_exp[0, :]
@@ -283,8 +361,13 @@ def lancer_calibration(
     pentes_exp = extraire_pentes_segments(temps_exp, o2_exp, fenetres)
     ratios_exp = calculer_ratios_pentes(pentes_exp)
 
-    population = population_initiale(aleatoire, cfg)
+    seed_init = seed_generation(cfg.random_seed, 0)
+    aleatoire_init = np.random.default_rng(seed_init)
+    population = population_initiale(aleatoire_init, cfg)
     historique = []
+    stagnation_count = 0
+    mutation_low_actuelle = float(cfg.mutation_low)
+    mutation_high_actuelle = float(cfg.mutation_high)
 
     meilleur_global = None
 
@@ -292,8 +375,16 @@ def lancer_calibration(
         scores = np.full(cfg.population_size, np.inf, dtype=float)
         pentes_sim_stock = [None] * cfg.population_size
         ratios_sim_stock = [None] * cfg.population_size
+        print(
+            f"Generation {gen:02d} | evaluation en cours ({cfg.population_size} individus)",
+            flush=True,
+        )
 
         for idx, individu in enumerate(population):
+            print(
+                f"Generation {gen:02d} | individu {idx + 1:02d}/{cfg.population_size:02d}",
+                flush=True,
+            )
             try:
                 executer_modele_cpp(
                     chemins["executable"],
@@ -306,15 +397,37 @@ def lancer_calibration(
                         tfinal_min=tfinal_min,
                         pulse_times_min=pulse_times_min,
                     ),
+                    cfg.cpp_timeout_sec,
                 )
                 temps_sim, o2_sim = charger_deux_colonnes(chemins["sortie_modele"])
+                valider_couverture_fenetres(temps_sim, fenetres)
                 pentes_sim = extraire_pentes_segments(temps_sim, o2_sim, fenetres)
                 ratios_sim = calculer_ratios_pentes(pentes_sim)
-                score = calculer_cout_quadratique(pentes_exp, pentes_sim, ratios_exp, ratios_sim, cfg.poids_ratios)
+                cout_quadratique = calculer_cout_quadratique(
+                    pentes_exp,
+                    pentes_sim,
+                    ratios_exp,
+                    ratios_sim,
+                    cfg.poids_ratios,
+                )
+                norme_l2_points = calculer_norme_l2_points(temps_exp, o2_exp, temps_sim, o2_sim)
+                score = cout_quadratique + cfg.poids_points_l2 * norme_l2_points
                 scores[idx] = score
                 pentes_sim_stock[idx] = pentes_sim
                 ratios_sim_stock[idx] = ratios_sim
-            except Exception:
+            except subprocess.TimeoutExpired:
+                print(
+                    f"Generation {gen:02d} | individu {idx + 1:02d} timeout > {cfg.cpp_timeout_sec}s, penalise",
+                    flush=True,
+                )
+                scores[idx] = 1e9
+                pentes_sim_stock[idx] = np.full_like(pentes_exp, np.nan)
+                ratios_sim_stock[idx] = np.full_like(ratios_exp, np.nan)
+            except Exception as exc:
+                print(
+                    f"Generation {gen:02d} | individu {idx + 1:02d} erreur: {type(exc).__name__}: {exc}",
+                    flush=True,
+                )
                 scores[idx] = 1e9
                 pentes_sim_stock[idx] = np.full_like(pentes_exp, np.nan)
                 ratios_sim_stock[idx] = np.full_like(ratios_exp, np.nan)
@@ -336,20 +449,61 @@ def lancer_calibration(
                 "sim_ratios": np.array(meilleurs_ratios_sim, dtype=float),
                 "exp_ratios": ratios_exp.copy(),
             }
+            stagnation_count = 0
+        else:
+            stagnation_count += 1
 
         historique.append(
             {
                 "generation": gen,
                 "best_fitness": meilleur_score,
+                "seed_generation": seed_generation(cfg.random_seed, gen),
             }
         )
 
         print(
-            f"Generation {gen:02d} | best={meilleur_score:.6e}"
+            f"Generation {gen:02d} | best={meilleur_score:.6e} | seed={seed_generation(cfg.random_seed, gen)}",
+            flush=True,
         )
 
-        elites = population[ordre[: cfg.elite_size]]
-        population = faire_evoluer_population(aleatoire, elites, cfg)
+        if (gen + 1) % cfg.checkpoint_every == 0:
+            ecrire_checkpoint_intermediaire(
+                chemins["dossier_sortie"],
+                nom_jeu,
+                historique,
+                meilleur_global,
+                gen,
+            )
+
+        if cfg.elite_size <= 1:
+            nb_parents = int(round(cfg.population_size * float(cfg.elite_size)))
+        else:
+            nb_parents = int(round(cfg.population_size * float(cfg.elite_size) / 100.0))
+        nb_parents = max(2, min(cfg.population_size - 1, nb_parents))
+        parents = population[ordre[:nb_parents]]
+        seed_enfants = seed_generation(cfg.random_seed, gen + 1)
+        aleatoire_enfants = np.random.default_rng(seed_enfants)
+        if stagnation_count > 3:
+            mutation_low_actuelle -= 0.02
+            mutation_high_actuelle += 0.02
+            mutation_low_actuelle, mutation_high_actuelle = borner_intervalle_mutation(
+                mutation_low_actuelle,
+                mutation_high_actuelle,
+            )
+            stagnation_count = 0
+            print(
+                f"Generation {gen:02d} | stagnation detectee, mutation elargie a [{mutation_low_actuelle:.4f}, {mutation_high_actuelle:.4f}]",
+                flush=True,
+            )
+
+        mutation_low_originale = cfg.mutation_low
+        mutation_high_originale = cfg.mutation_high
+        cfg.mutation_low = mutation_low_actuelle
+        cfg.mutation_high = mutation_high_actuelle
+        enfants = faire_evoluer_population(aleatoire_enfants, parents, cfg)
+        cfg.mutation_low = mutation_low_originale
+        cfg.mutation_high = mutation_high_originale
+        population = np.vstack([parents, enfants])
 
     assert meilleur_global is not None
     return {
@@ -393,6 +547,34 @@ def ecrire_sorties(resultat, historique):
         f.write(",".join(valeurs_parametres) + "\n")
 
     return chemin_historique, chemin_parametres
+
+
+def ecrire_checkpoint_intermediaire(dossier_sortie, nom_jeu, historique, best, generation):
+    chemin_historique = dossier_sortie / f"calibration_{nom_jeu}_checkpoint_generation.csv"
+    chemin_parametres = dossier_sortie / f"calibration_{nom_jeu}_checkpoint_parametre.csv"
+    chemin_log = dossier_sortie / f"calibration_{nom_jeu}_checkpoint_log.csv"
+
+    en_tete = "generation,best_fitness,seed_generation\n"
+    lignes = [
+        f"{h['generation']},{h['best_fitness']},{h.get('seed_generation', '')}\n"
+        for h in historique
+    ]
+    with chemin_historique.open("w", encoding="utf-8") as f:
+        f.write(en_tete)
+        f.writelines(lignes)
+
+    en_tete_parametres = NOMS_PARAMETRES_CALIBRES + ["best_fitness", "best_generation"]
+    valeurs_parametres = [str(float(best["individual"][i])) for i in range(len(NOMS_PARAMETRES_CALIBRES))]
+    valeurs_parametres.extend([str(float(best["fitness"])), str(int(best["generation"]))])
+    with chemin_parametres.open("w", encoding="utf-8") as f:
+        f.write(",".join(en_tete_parametres) + "\n")
+        f.write(",".join(valeurs_parametres) + "\n")
+
+    log_existe = chemin_log.exists()
+    with chemin_log.open("a", encoding="utf-8") as f:
+        if not log_existe:
+            f.write("checkpoint_generation,best_generation,best_fitness\n")
+        f.write(f"{generation},{int(best['generation'])},{float(best['fitness'])}\n")
 
 
 def lire_csv_meilleurs_parametres(chemin_parametres):
@@ -461,6 +643,7 @@ def relancer_cpp_depuis_csv_et_tracer(
             tfinal_min=float(resultat["tfinal_min"]),
             pulse_times_min=list(resultat["pulse_times_min"]),
         ),
+        resultat["config"].cpp_timeout_sec,
     )
 
     temps_sim, o2_sim = charger_deux_colonnes(chemins["sortie_modele"])
@@ -528,22 +711,26 @@ def calibrer_un_jeu(
         fenetre_data,
     )
 
-    print(f"[{nom_jeu}] Calibration terminee.")
-    print(f"[{nom_jeu}] Fenetre data source: {fenetre_data}")
-    print(f"[{nom_jeu}] tfinal C++: {tfinal_min} min")
-    print(f"[{nom_jeu}] Pulses ADP (min): {pulse_times_min}")
-    print(f"[{nom_jeu}] Debut jo_norm={debut_jo_norm} min, debut o2_norm={debut_o2_norm} min")
-    print(f"[{nom_jeu}] Ajouts ADP_c (mM) utilises: {ajouts_adp_mm}")
+    print(f"[{nom_jeu}] Calibration terminee.", flush=True)
+    print(f"[{nom_jeu}] Fenetre data source: {fenetre_data}", flush=True)
+    print(f"[{nom_jeu}] tfinal C++: {tfinal_min} min", flush=True)
+    print(f"[{nom_jeu}] Pulses ADP (min): {pulse_times_min}", flush=True)
+    print(f"[{nom_jeu}] Debut jo_norm={debut_jo_norm} min, debut o2_norm={debut_o2_norm} min", flush=True)
+    print(f"[{nom_jeu}] Ajouts ADP_c (mM) utilises: {ajouts_adp_mm}", flush=True)
 
 
 def main():
+    random_seed_run = int(time.time_ns() % (2**32))
     cfg = ConfigurationCalibration(
-        population_size=20,
-        generations=100,
-        elite_size=4,
+        population_size=100,
+        generations=25,
+        elite_size=25,
         poids_ratios=1.0,
-        random_seed=42,
+        poids_points_l2=0.2,
+        random_seed=random_seed_run,
     )
+
+    print(f"Seed de base du run: {cfg.random_seed}", flush=True)
 
     for nom_jeu, metadonnees in JEUX_CALIBRATION.items():
         chemins_jeu = resoudre_chemins(metadonnees["fichier"])
@@ -553,11 +740,11 @@ def main():
         tfinal_jeu = float(metadonnees.get("tfinal_min", fenetre_npy[1]))
         pulses_jeu = list(metadonnees.get("pulse_times_min", []))
 
-        print(f"[{nom_jeu}] Fenetre calculee depuis NPY: {fenetre_npy}")
-        print(f"[{nom_jeu}] tfinal par defaut (max NPY): {fenetre_npy[1]:.2f} min")
-        print(f"[{nom_jeu}] Pulses ADP utilises (min): {pulses_jeu}")
-        print(f"[{nom_jeu}] Temps d'ajout ADP utilises (min): {pulses_jeu}")
-        print(f"[{nom_jeu}] Nombre de generation {cfg.generations}")
+        print(f"[{nom_jeu}] Fenetre calculee depuis NPY: {fenetre_npy}", flush=True)
+        print(f"[{nom_jeu}] tfinal par defaut (max NPY): {fenetre_npy[1]:.2f} min", flush=True)
+        print(f"[{nom_jeu}] Pulses ADP utilises (min): {pulses_jeu}", flush=True)
+        print(f"[{nom_jeu}] Temps d'ajout ADP utilises (min): {pulses_jeu}", flush=True)
+        print(f"[{nom_jeu}] Nombre de generation {cfg.generations}", flush=True)
 
         calibrer_un_jeu(
             cfg,
